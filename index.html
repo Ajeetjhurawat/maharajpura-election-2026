@@ -26,8 +26,8 @@
 </head>
 <body class="min-h-screen flex flex-col">
 
-  <!-- LOGIN SCREEN OVERLAY (UNIQUE PREMIUM DESIGN - NO USERNAME CHIPS OR CLUTTER) -->
-  <div id="loginOverlay" class="fixed inset-0 z-50 bg-[#070B19] flex items-center justify-center p-4 overflow-y-auto relative">
+  <!-- LOGIN SCREEN OVERLAY (STRICT STEP-1 GATE: ONLY THIS SHOWS WHEN LOGGED OUT) -->
+  <div id="loginOverlay" class="fixed inset-0 z-50 bg-[#070B19] flex items-center justify-center p-4 overflow-y-auto">
     <!-- Decorative Ambient Tricolor / Royal Glows -->
     <div class="pointer-events-none fixed inset-0 overflow-hidden">
       <div class="absolute -top-28 -left-28 w-96 h-96 rounded-full bg-amber-500/20 blur-3xl"></div>
@@ -35,15 +35,15 @@
       <div class="absolute -bottom-28 left-1/4 w-96 h-96 rounded-full bg-emerald-500/20 blur-3xl"></div>
     </div>
 
-    <div class="relative w-full max-w-md my-auto">
+    <div class="relative w-full max-w-md my-auto z-10">
       <!-- Outer Golden/Tricolor Gradient Border Card -->
-      <div class="p-[2px] rounded-3xl bg-gradient-to-br from-amber-400 via-blue-500 to-emerald-400 shadow-[0_20px_70px_rgba(0,0,0,0.75)]">
+      <div class="p-[2px] rounded-3xl bg-gradient-to-br from-amber-400 via-blue-500 to-emerald-400 shadow-[0_20px_70px_rgba(0,0,0,0.85)]">
         <div class="bg-slate-900/95 backdrop-blur-xl rounded-[22px] p-6 sm:p-8 text-white space-y-6">
           
           <!-- Top Emblem & Title -->
           <div class="text-center space-y-2.5">
             <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-300 text-[11px] font-bold tracking-wide uppercase">
-              <span>✨</span> डिजिटल चुनाव वॉर-रूम पोर्टल 2026
+              <span>🔒</span> सुरक्षित डिजिटल लॉगिन पोर्टल 2026
             </div>
             
             <div class="relative mx-auto w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-600 to-indigo-900 p-[2px] shadow-xl">
@@ -58,24 +58,8 @@
                 ग्राम पंचायत महाराजपुरा
               </h2>
               <p class="text-xs sm:text-sm text-slate-300 font-medium mt-1">
-                सरपंच चुनाव स्मार्ट सर्वे एवं लाइव ऑटो-सिंक सिस्टम
+                अधिकृत यूजर आईडी एवं सीक्रेट पासवर्ड से लॉगिन करें
               </p>
-            </div>
-
-            <!-- 3 Mini Stat Pills -->
-            <div class="grid grid-cols-3 gap-2 pt-1">
-              <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl py-1.5 px-2">
-                <div class="text-xs sm:text-sm font-extrabold text-amber-400">09</div>
-                <div class="text-[10px] text-slate-400">कुल वार्ड</div>
-              </div>
-              <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl py-1.5 px-2">
-                <div class="text-xs sm:text-sm font-extrabold text-sky-400">242</div>
-                <div class="text-[10px] text-slate-400">कुल परिवार</div>
-              </div>
-              <div class="bg-slate-800/80 border border-slate-700/80 rounded-xl py-1.5 px-2">
-                <div class="text-xs sm:text-sm font-extrabold text-emerald-400">2,527</div>
-                <div class="text-[10px] text-slate-400">कुल मतदाता</div>
-              </div>
             </div>
           </div>
 
@@ -116,13 +100,16 @@
               <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
               लाइव क्लाउड ऑटो-सिंक सक्रिय
             </span>
-            <span>पं.स. नांगल राजावतान (दौसा)</span>
+            <span>सुरक्षित पोर्टल</span>
           </div>
 
         </div>
       </div>
     </div>
   </div>
+
+  <!-- PROTECTED APPLICATION SHELL (COMPLETELY HIDDEN UNTIL LOGGED IN) -->
+  <div id="appProtectedShell" class="hidden min-h-screen flex-col" style="display: none;">
 
   <!-- Top Header -->
   <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 text-white shadow-md sticky top-0 z-30">
@@ -505,6 +492,7 @@
     </section>
 
   </main>
+  </div><!-- /#appProtectedShell -->
 
   <!-- Family Members Modal -->
   <div id="familyModal" class="fixed inset-0 bg-slate-900/60 z-50 hidden items-center justify-center p-3">
@@ -924,13 +912,15 @@
       if (changed) {
         saveLocalOnly();
         syncAppStatePointer();
-        updateTopKPIs();
-        renderFamilies();
-        renderVoters();
-        renderDashboard();
-        if (currentLoggedInUser === "ADMIN") renderAdminPanel();
-        if (showFeedback) showToast("☁️ सभी 10 आईडी का लाइव डेटा अपडेट हो गया!");
-      } else if (showFeedback) {
+        if (currentLoggedInUser) {
+          updateTopKPIs();
+          renderFamilies();
+          renderVoters();
+          renderDashboard();
+          if (currentLoggedInUser === "ADMIN") renderAdminPanel();
+          if (showFeedback) showToast("☁️ सभी 10 आईडी का लाइव डेटा अपडेट हो गया!");
+        }
+      } else if (showFeedback && currentLoggedInUser) {
         showToast("✅ डेटा पहले से अप-टू-डेट है!");
       }
       setCloudStatusUI("ok", "ऑटो-सिंक चालू (Live)");
@@ -952,12 +942,14 @@
             if (applyIncomingCloudPacket(pkt)) {
               saveLocalOnly();
               syncAppStatePointer();
-              updateTopKPIs();
-              renderFamilies();
-              renderVoters();
-              renderDashboard();
-              if (currentLoggedInUser === "ADMIN") renderAdminPanel();
-              setCloudStatusUI("ok", `लाइव अपडेट (${pkt.uid})`);
+              if (currentLoggedInUser) {
+                updateTopKPIs();
+                renderFamilies();
+                renderVoters();
+                renderDashboard();
+                if (currentLoggedInUser === "ADMIN") renderAdminPanel();
+                setCloudStatusUI("ok", `लाइव अपडेट (${pkt.uid})`);
+              }
             }
           } catch (e) {}
         };
@@ -1081,13 +1073,37 @@
     // ---------------- LOGIN & SESSION LOGIC ----------------
     function applyLoggedInUI() {
       const overlay = document.getElementById("loginOverlay");
+      const appShell = document.getElementById("appProtectedShell");
       if (!currentLoggedInUser) {
+        // Strictly show ONLY login overlay and hide entire app shell + clear rendered data
         overlay.classList.remove("hidden");
         overlay.classList.add("flex");
+        overlay.style.display = "flex";
+        if (appShell) {
+          appShell.classList.add("hidden");
+          appShell.classList.remove("flex");
+          appShell.style.display = "none";
+        }
+        ["familiesGrid", "votersTableBody", "dashboardTableBody", "adminUsersTableBody", "adminMatrixTableBody"].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.innerHTML = "";
+        });
+        const fm = document.getElementById("familyModal");
+        if (fm) { fm.classList.add("hidden"); fm.classList.remove("flex"); }
+        const sm = document.getElementById("syncModal");
+        if (sm) { sm.classList.add("hidden"); sm.classList.remove("flex"); }
+        window.scrollTo(0, 0);
         return;
       }
+      // Logged in: strictly hide login overlay and reveal app shell
       overlay.classList.add("hidden");
       overlay.classList.remove("flex");
+      overlay.style.display = "none";
+      if (appShell) {
+        appShell.classList.remove("hidden");
+        appShell.classList.add("flex");
+        appShell.style.display = "flex";
+      }
 
       const acc = multiDB.accounts[currentLoggedInUser];
       const badge = document.getElementById("activeUserBadge");
@@ -1627,14 +1643,8 @@
     document.addEventListener("DOMContentLoaded", () => {
       loadState();
 
-      // Check if session exists
-      try {
-        const savedSess = sessionStorage.getItem(SESSION_KEY);
-        if (savedSess && multiDB.accounts[savedSess]) {
-          currentLoggedInUser = savedSess;
-          activeTargetUser = savedSess;
-        }
-      } catch (e) {}
+      // Always start at Step 1 (Login Screen) until user logs in
+      currentLoggedInUser = null;
 
       applyLoggedInUI();
       startLiveCloudStream();
@@ -1684,10 +1694,18 @@
         showToast(`✅ स्वागत है: ${acc.name} (${acc.id})`);
       });
 
-      // Logout / Switch ID
+      // Logout / Switch ID -> Immediately return to Login Page & hide all data
       document.getElementById("btnLogout").addEventListener("click", () => {
         currentLoggedInUser = null;
+        activeTargetUser = "ADMIN";
         try { sessionStorage.removeItem(SESSION_KEY); } catch (err) {}
+        const uInp = document.getElementById("loginUserId");
+        const pInp = document.getElementById("loginPassword");
+        const errBox = document.getElementById("loginErrorBox");
+        if (uInp) uInp.value = "";
+        if (pInp) pInp.value = "";
+        if (errBox) errBox.classList.add("hidden");
+        switchTab("families");
         applyLoggedInUI();
       });
 
