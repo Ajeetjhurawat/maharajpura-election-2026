@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ग्राम पंचायत महाराजपुरा मास्टर ट्रैकर</title>
+  <title>ग्राम पंचायत महाराजपुरा</title>
   <script src="https://cdn.tailwindcss.com/3.4.17"></script>
   <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
   <style>
@@ -67,7 +67,7 @@
 
             <div>
               <h2 class="text-xl sm:text-2xl font-extrabold tracking-tight bg-gradient-to-r from-white via-amber-100 to-amber-300 bg-clip-text text-transparent">
-                ग्राम पंचायत महाराजपुरा मास्टर ट्रैकर
+                ग्राम पंचायत महाराजपुरा
               </h2>
               <p class="text-xs sm:text-sm text-slate-300 font-medium mt-1">
                 अधिकृत यूजर आईडी / यूजरनेम एवं पासवर्ड से लॉगिन करें
@@ -108,14 +108,6 @@
               <span>लॉगिन करें</span>
             </button>
           </form>
-
-          <!-- Direct HTML File Download Button on Login Card -->
-          <div class="pt-2">
-            <button type="button" id="btnLoginDownloadHTML" class="w-full py-2.5 px-4 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-amber-400/40 text-amber-300 font-bold text-xs sm:text-sm transition flex items-center justify-center gap-2 shadow-sm">
-              <i data-lucide="download" class="w-4 h-4 text-amber-400"></i>
-              <span>यह HTML फाइल डाउनलोड करें (.html)</span>
-            </button>
-          </div>
 
           <!-- Live Cloud Sync Indicator at Bottom of Login Card -->
           <div class="pt-3 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
@@ -198,12 +190,6 @@
               <i data-lucide="cloud-cog" class="w-4 h-4"></i>
             </button>
 
-            <!-- HTML File Download Button -->
-            <button id="btnDownloadHTML" type="button" class="px-2.5 py-1.5 rounded-xl bg-amber-500/90 hover:bg-amber-400 border border-amber-300/40 text-xs font-extrabold text-slate-950 transition flex items-center gap-1.5 shadow-sm" title="इस ऐप की HTML फाइल डाउनलोड करें">
-              <i data-lucide="download" class="w-3.5 h-3.5"></i>
-              <span>HTML फाइल डाउनलोड</span>
-            </button>
-
             <!-- Excel CSV Download Button -->
             <button id="btnExportCSV" type="button" class="px-2.5 py-1.5 rounded-xl bg-emerald-600/90 hover:bg-emerald-500 border border-emerald-400/30 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-sm" title="Excel CSV Download">
               <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
@@ -214,6 +200,12 @@
             <button id="btnBackupJSON" type="button" class="px-2.5 py-1.5 rounded-xl bg-blue-600/90 hover:bg-blue-500 border border-blue-400/30 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-sm" title="Data Backup">
               <i data-lucide="database-backup" class="w-3.5 h-3.5"></i>
               <span>Backup</span>
+            </button>
+
+            <!-- Reset Survey Data Button (For Current Active User / Admin) -->
+            <button id="btnResetMyData" type="button" class="px-2.5 py-1.5 rounded-xl bg-amber-600/90 hover:bg-amber-500 border border-amber-400/30 text-xs font-semibold text-white transition flex items-center gap-1.5 shadow-sm" title="अपना सर्वे डेटा रीसेट (0) करें">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+              <span>Reset Data</span>
             </button>
 
             <!-- Restore Icon Button -->
@@ -277,10 +269,6 @@
                   <i data-lucide="cloud-cog" class="w-4 h-4 text-indigo-400"></i>
                   <span>Cloud Settings</span>
                 </button>
-                <button id="btnMobileDownloadHTML" type="button" class="w-full px-4 py-2 text-left text-xs font-bold text-amber-300 hover:bg-slate-800 flex items-center gap-2.5">
-                  <i data-lucide="download" class="w-4 h-4 text-amber-400"></i>
-                  <span>HTML फाइल डाउनलोड करें</span>
-                </button>
                 <button id="btnMobileCSV" type="button" class="w-full px-4 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
                   <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
                   <span>Excel CSV Download</span>
@@ -292,6 +280,10 @@
                 <button id="btnMobileRestoreTrigger" type="button" class="w-full px-4 py-2 text-left text-xs font-semibold text-slate-200 hover:bg-slate-800 flex items-center gap-2.5">
                   <i data-lucide="folder-up" class="w-4 h-4 text-amber-400"></i>
                   <span>Backup Restore</span>
+                </button>
+                <button id="btnMobileResetMyData" type="button" class="w-full px-4 py-2 text-left text-xs font-semibold text-amber-300 hover:bg-slate-800 flex items-center gap-2.5">
+                  <i data-lucide="rotate-ccw" class="w-4 h-4 text-amber-400"></i>
+                  <span>Reset Data (डेटा रीसेट करें)</span>
                 </button>
               </div>
 
@@ -578,6 +570,10 @@
                 <i data-lucide="layers" class="w-3.5 h-3.5"></i>
                 <span>संयुक्त औसत (Consensus) देखें</span>
               </button>
+              <button id="btnAdminResetAllUsers" type="button" class="px-3 py-1.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-white text-xs font-bold shadow-sm flex items-center gap-1.5">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                <span>सभी 10 ID का सर्वे डेटा रीसेट (0) करें</span>
+              </button>
             </div>
           </div>
 
@@ -585,15 +581,15 @@
             <table class="w-full text-left border-collapse text-xs sm:text-sm">
               <thead>
                 <tr class="bg-slate-900 text-white">
-                  <th class="py-2.5 px-3">यूजर ID / Username</th>
-                  <th class="py-2.5 px-3">सर्वेयर / टीम का नाम (बदलें)</th>
-                  <th class="py-2.5 px-3">सीक्रेट पासवर्ड</th>
+                  <th class="py-2.5 px-3">सिस्टम ID / वर्तमान Username</th>
+                  <th class="py-2.5 px-3">सर्वेयर / टीम का नाम</th>
+                  <th class="py-2.5 px-3">वर्तमान पासवर्ड (नया जनरेट / रीसेट करें)</th>
                   <th class="py-2.5 px-3 text-right">सर्वे किए घर</th>
                   <th class="py-2.5 px-3 text-right text-emerald-300">हमारे वोट (A)</th>
                   <th class="py-2.5 px-3 text-right text-rose-300">विरोधी (B)</th>
                   <th class="py-2.5 px-3 text-right text-amber-300">स्विंग/बाकी</th>
                   <th class="py-2.5 px-3 text-right">अंतिम अपडेट</th>
-                  <th class="py-2.5 px-3 text-center">एक्शन (डेटा चेक करें)</th>
+                  <th class="py-2.5 px-3 text-center">सर्वे डेटा एक्शन (खोलें / रीसेट)</th>
                 </tr>
               </thead>
               <tbody id="adminUsersTableBody" class="divide-y divide-slate-200"></tbody>
@@ -719,6 +715,18 @@
           </div>
         </div>
 
+        <!-- Reset Own Survey Data Option Inside Profile Modal -->
+        <div class="p-3 rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-between gap-2">
+          <div>
+            <div class="text-xs font-bold text-rose-900">सर्वे डेटा रीसेट करें (शुरू से भरें)</div>
+            <p class="text-[10px] text-rose-700">अपनी आईडी में सेव किए गए सभी वोट/परिवार शून्य (0) करके दोबारा भरें</p>
+          </div>
+          <button type="button" id="btnProfileResetMyData" class="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shrink-0 flex items-center gap-1 shadow-sm">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+            <span>Reset Data</span>
+          </button>
+        </div>
+
         <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
           <button type="button" id="btnCancelProfileModal" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">रद्द करें</button>
           <button type="submit" class="px-4 py-2 rounded-xl bg-blue-700 hover:bg-blue-600 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm">
@@ -727,6 +735,32 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Custom Reset Survey Data Confirmation Modal (No Native window.confirm) -->
+  <div id="resetConfirmModal" class="fixed inset-0 bg-slate-950/75 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-rose-200 overflow-hidden">
+      <div class="bg-gradient-to-r from-rose-700 via-rose-600 to-amber-600 text-white px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-200"></i>
+          <h3 class="font-extrabold text-sm sm:text-base">सर्वे डेटा रीसेट करने की पुष्टि करें</h3>
+        </div>
+        <button id="btnCloseResetModal" type="button" class="text-rose-100 hover:text-white text-lg font-bold px-2">✕</button>
+      </div>
+      <div class="p-5 space-y-4">
+        <p id="resetConfirmMessage" class="text-xs sm:text-sm text-slate-700 font-medium leading-relaxed"></p>
+        <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-900 font-semibold">
+          💡 नोट: डेटा रीसेट करने से आपके नाम और पासवर्ड पर कोई असर नहीं पड़ेगा, केवल सेव किए गए वोट/परिवार (A/B/C) शून्य (0) हो जाएंगे ताकि आप नए सिरे से सर्वे भर सकें।
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button id="btnCancelResetModal" type="button" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">रद्द करें</button>
+          <button id="btnConfirmResetExecute" type="button" class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-md">
+            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            <span>हाँ, पूरा डेटा रीसेट (0) करें</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -974,7 +1008,9 @@
                 multiDB.users[k] = {
                   families: parsed.users[k].families || {},
                   voters: parsed.users[k].voters || {},
-                  updatedAt: parsed.users[k].updatedAt || null
+                  updatedAt: parsed.users[k].updatedAt || null,
+                  _ts: parsed.users[k]._ts || 0,
+                  resetAt: parsed.users[k].resetAt || 0
                 };
               });
             }
@@ -1027,25 +1063,48 @@
       }
     }
 
-    // Push full snapshot of activeTargetUser to Built-in Cloud + Custom Cloud URL automatically
+    // Push full snapshot of a user (and accounts metadata) to Built-in Cloud + Custom Cloud URL automatically
     function pushUserSnapshotToCloud(uid) {
       if (!uid || uid === "CONSENSUS" || !multiDB.users[uid]) return;
       setCloudStatusUI("syncing", "Syncing to Cloud...");
-      const accMeta = multiDB.accounts[uid] ? {
-        name: multiDB.accounts[uid].name,
-        username: multiDB.accounts[uid].username,
-        pass: multiDB.accounts[uid].pass
+      const accObj = multiDB.accounts[uid];
+      const accMeta = accObj ? {
+        name: accObj.name,
+        username: accObj.username,
+        pass: accObj.pass,
+        _accTs: accObj._accTs || Date.now()
       } : null;
+
+      // Strip heavy base64 avatars from cloud broadcast so payload stays tiny and fast
+      const cleanAccMap = {};
+      Object.keys(multiDB.accounts).forEach(k => {
+        const a = multiDB.accounts[k];
+        if (a) {
+          cleanAccMap[k] = {
+            id: a.id,
+            username: a.username || a.id,
+            pass: a.pass,
+            role: a.role,
+            name: a.name,
+            _accTs: a._accTs || 0
+          };
+        }
+      });
+
+      const nowTs = multiDB.users[uid]._ts || Date.now();
+      multiDB.users[uid]._ts = nowTs;
+
       const payload = {
         v: 3,
         type: "USER_SYNC",
         uid: uid,
-        ts: Date.now(),
+        ts: nowTs,
+        resetAt: multiDB.users[uid].resetAt || 0,
         updatedAt: multiDB.users[uid].updatedAt,
         families: multiDB.users[uid].families || {},
         voters: multiDB.users[uid].voters || {},
         userAcc: accMeta,
-        acc: uid === "ADMIN" ? multiDB.accounts : undefined
+        acc: cleanAccMap
       };
 
       fetch(BUILTIN_CLOUD_BASE, {
@@ -1071,6 +1130,11 @@
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(multiDB.users[uid])
           }).catch(() => {});
+          fetch(`${cleanBase}/maharajpura_v3/accounts.json`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(cleanAccMap)
+          }).catch(() => {});
         } else {
           fetch(url, {
             method: "POST",
@@ -1088,32 +1152,56 @@
       const incomingTs = pkt.ts || 0;
       const localSlot = multiDB.users[pkt.uid];
       const localTs = localSlot._ts || 0;
-      if (incomingTs < localTs) return false;
+      let anyUpdated = false;
 
-      localSlot.families = Object.assign({}, localSlot.families || {}, pkt.families || {});
-      localSlot.voters = Object.assign({}, localSlot.voters || {}, pkt.voters || {});
-      localSlot.updatedAt = pkt.updatedAt || new Date().toLocaleString("hi-IN");
-      localSlot._ts = incomingTs;
+      if (incomingTs >= localTs) {
+        const incResetAt = pkt.resetAt || 0;
+        const locResetAt = localSlot.resetAt || 0;
+        if (incResetAt > locResetAt || pkt.isReset) {
+          // Full replace when a reset occurred so wiped entries are not resurrected
+          localSlot.families = JSON.parse(JSON.stringify(pkt.families || {}));
+          localSlot.voters = JSON.parse(JSON.stringify(pkt.voters || {}));
+          localSlot.resetAt = incResetAt || incomingTs;
+        } else {
+          // Since pushUserSnapshotToCloud always sends the complete snapshot of families & voters,
+          // replacing when incomingTs >= localTs ensures deletions/resets and updates stay exact
+          localSlot.families = JSON.parse(JSON.stringify(pkt.families || {}));
+          localSlot.voters = JSON.parse(JSON.stringify(pkt.voters || {}));
+          if (incResetAt) localSlot.resetAt = Math.max(locResetAt, incResetAt);
+        }
+        localSlot.updatedAt = pkt.updatedAt || new Date().toLocaleString("hi-IN");
+        localSlot._ts = incomingTs;
+        anyUpdated = true;
+      }
 
       if (pkt.userAcc && multiDB.accounts[pkt.uid]) {
-        if (pkt.userAcc.name) multiDB.accounts[pkt.uid].name = pkt.userAcc.name;
-        if (pkt.userAcc.username) multiDB.accounts[pkt.uid].username = pkt.userAcc.username;
-        if (pkt.userAcc.pass) multiDB.accounts[pkt.uid].pass = pkt.userAcc.pass;
+        const incAccTs = pkt.userAcc._accTs || incomingTs || 0;
+        const locAccTs = multiDB.accounts[pkt.uid]._accTs || 0;
+        if (incAccTs >= locAccTs) {
+          if (pkt.userAcc.name) multiDB.accounts[pkt.uid].name = pkt.userAcc.name;
+          if (pkt.userAcc.username) multiDB.accounts[pkt.uid].username = pkt.userAcc.username;
+          if (pkt.userAcc.pass) multiDB.accounts[pkt.uid].pass = pkt.userAcc.pass;
+          multiDB.accounts[pkt.uid]._accTs = incAccTs;
+          anyUpdated = true;
+        }
       }
 
       if (pkt.acc && typeof pkt.acc === "object") {
         Object.keys(DEFAULT_ACCOUNTS).forEach(k => {
           if (pkt.acc[k]) {
-            const existingAvatar = multiDB.accounts[k] ? multiDB.accounts[k].avatar : "";
-            multiDB.accounts[k] = Object.assign({}, DEFAULT_ACCOUNTS[k], pkt.acc[k]);
-            if (!multiDB.accounts[k].avatar && existingAvatar) {
-              multiDB.accounts[k].avatar = existingAvatar;
+            const incAccTs = pkt.acc[k]._accTs || 0;
+            const locAccTs = (multiDB.accounts[k] && multiDB.accounts[k]._accTs) || 0;
+            if (incAccTs >= locAccTs && incAccTs > 0) {
+              const existingAvatar = multiDB.accounts[k] ? multiDB.accounts[k].avatar : "";
+              multiDB.accounts[k] = Object.assign({}, DEFAULT_ACCOUNTS[k], multiDB.accounts[k], pkt.acc[k]);
+              if (existingAvatar) multiDB.accounts[k].avatar = existingAvatar;
+              anyUpdated = true;
             }
           }
         });
       }
       if (incomingTs > lastProcessedCloudTs) lastProcessedCloudTs = incomingTs;
-      return true;
+      return anyUpdated;
     }
 
     let isPullingCloud = false;
@@ -1395,7 +1483,7 @@
           const el = document.getElementById(id);
           if (el) el.innerHTML = "";
         });
-        ["familyModal", "syncModal", "profileModal"].forEach(mid => {
+        ["familyModal", "syncModal", "profileModal", "resetConfirmModal"].forEach(mid => {
           const m = document.getElementById(mid);
           if (m) { m.classList.add("hidden"); m.classList.remove("flex"); }
         });
@@ -1823,34 +1911,54 @@
         const acc = multiDB.accounts[uid];
         const st = getUserStats(uid);
         const isCurrentTarget = activeTargetUser === uid;
+        const curUsername = acc.username || uid;
+        const isCustomUname = curUsername.toUpperCase() !== uid;
 
         const tr = document.createElement("tr");
-        tr.className = isCurrentTarget ? "bg-amber-50 font-semibold" : "hover:bg-slate-50";
+        tr.className = isCurrentTarget ? "bg-amber-50/90 font-semibold" : "hover:bg-slate-50";
         tr.innerHTML = `
-          <td class="py-2 px-3 font-extrabold text-slate-900">
-            <div class="flex items-center gap-1.5">
-              <span class="px-2 py-0.5 rounded ${uid==='ADMIN' ? 'bg-amber-200 text-amber-950' : 'bg-blue-100 text-blue-900'}">${uid}</span>
-              <input type="text" data-edit-username="${uid}" value="${acc.username || uid}" class="px-2 py-1 text-xs rounded border border-slate-300 w-24 font-bold text-slate-800" title="Username">
+          <td class="py-2.5 px-3 font-extrabold text-slate-900">
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-1.5">
+                <span class="px-2 py-0.5 rounded text-[11px] font-extrabold ${uid==='ADMIN' ? 'bg-amber-200 text-amber-950' : 'bg-blue-100 text-blue-900'}">${uid}</span>
+                ${isCustomUname ? `<span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">@${curUsername}</span>` : `<span class="text-[10px] text-slate-400">डिफ़ॉल्ट ID</span>`}
+              </div>
+              <input type="text" data-edit-username="${uid}" value="${curUsername}" class="px-2 py-1 text-xs rounded-lg border border-slate-300 w-32 font-bold text-slate-900 focus:border-blue-600 focus:outline-none" title="यूजरनेम बदलें">
             </div>
           </td>
-          <td class="py-2 px-3">
-            <input type="text" data-edit-name="${uid}" value="${acc.name}" class="px-2 py-1 text-xs rounded border border-slate-300 w-44 font-semibold">
+          <td class="py-2.5 px-3">
+            <input type="text" data-edit-name="${uid}" value="${acc.name}" class="px-2 py-1 text-xs rounded-lg border border-slate-300 w-40 font-semibold text-slate-900 focus:border-blue-600 focus:outline-none">
           </td>
-          <td class="py-2 px-3">
-            <input type="text" data-edit-pass="${uid}" value="${acc.pass}" class="px-2 py-1 text-xs font-mono rounded border border-slate-300 w-28 font-bold text-slate-800">
+          <td class="py-2.5 px-3">
+            <div class="flex flex-col gap-1">
+              <div class="flex items-center gap-1">
+                <input type="text" data-edit-pass="${uid}" value="${acc.pass}" class="px-2 py-1 text-xs font-mono rounded-lg border border-indigo-300 bg-indigo-50/50 w-28 font-extrabold text-indigo-950 focus:border-indigo-600 focus:outline-none" title="वर्तमान पासवर्ड">
+                <button type="button" data-act="admin-copy-single-cred" data-uid="${uid}" class="px-2 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 text-[11px] font-bold" title="ID और पासवर्ड कॉपी करें">
+                  📋 कॉपी
+                </button>
+              </div>
+              <div class="flex items-center gap-1">
+                <button type="button" data-act="admin-gen-pass" data-uid="${uid}" class="px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold shadow-sm" title="नया पासवर्ड जनरेट करें और कॉपी करें">
+                  🎲 नया पासवर्ड जनरेट करें
+                </button>
+                <button type="button" data-act="admin-reset-pass" data-uid="${uid}" class="px-2 py-0.5 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 text-[10px] font-bold" title="डिफ़ॉल्ट पासवर्ड (${DEFAULT_ACCOUNTS[uid].pass}) सेट करें">
+                  🔑 डिफ़ॉल्ट
+                </button>
+              </div>
+            </div>
           </td>
-          <td class="py-2 px-3 text-right font-bold">${st.surveyedFams} / 242</td>
-          <td class="py-2 px-3 text-right font-extrabold text-emerald-700">${st.ourVotes.toLocaleString()}</td>
-          <td class="py-2 px-3 text-right font-extrabold text-rose-700">${st.oppVotes.toLocaleString()}</td>
-          <td class="py-2 px-3 text-right font-semibold text-amber-700">${st.swingVotes.toLocaleString()}</td>
-          <td class="py-2 px-3 text-right text-[11px] text-slate-500">${st.updatedAt}</td>
-          <td class="py-2 px-3 text-center">
-            <div class="inline-flex items-center gap-1">
-              <button data-act="admin-inspect-user" data-uid="${uid}" class="px-2.5 py-1 rounded bg-blue-800 hover:bg-blue-700 text-white text-xs font-bold">
+          <td class="py-2.5 px-3 text-right font-bold">${st.surveyedFams} / 242</td>
+          <td class="py-2.5 px-3 text-right font-extrabold text-emerald-700">${st.ourVotes.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-right font-extrabold text-rose-700">${st.oppVotes.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-right font-semibold text-amber-700">${st.swingVotes.toLocaleString()}</td>
+          <td class="py-2.5 px-3 text-right text-[11px] text-slate-500">${st.updatedAt}</td>
+          <td class="py-2.5 px-3 text-center">
+            <div class="inline-flex items-center gap-1.5 flex-wrap justify-center">
+              <button type="button" data-act="admin-inspect-user" data-uid="${uid}" class="px-2.5 py-1 rounded-lg bg-blue-800 hover:bg-blue-700 text-white text-xs font-bold shadow-sm">
                 👁️ डेटा खोलें
               </button>
-              <button data-act="admin-clear-user" data-uid="${uid}" class="px-2 py-1 rounded bg-rose-100 hover:bg-rose-200 text-rose-800 text-xs font-bold">
-                रीसेट
+              <button type="button" data-act="admin-clear-user" data-uid="${uid}" class="px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-sm" title="${uid} का पूरा सर्वे डेटा रीसेट (0) करें">
+                🗑️ डेटा रीसेट
               </button>
             </div>
           </td>
@@ -2141,12 +2249,101 @@
         acc.name = newName;
         acc.pass = newPass;
         acc.avatar = pendingAvatarDataUrl || "";
+        acc._accTs = Date.now();
 
         saveState();
+        pushUserSnapshotToCloud(currentLoggedInUser);
         updateProfileCornerUI();
         updateInspectBanner();
         closeProfileModal();
         showToast("✅ आपकी प्रोफाइल, यूजरनेम व पासवर्ड अपडेट हो गए!");
+      });
+
+      // ---------------- RESET SURVEY DATA CONFIRMATION MODAL LOGIC ----------------
+      let pendingResetTarget = null; // UID like "MP01", "ADMIN", or "ALL_USERS"
+
+      function openResetConfirmModal(targetUid) {
+        if (!currentLoggedInUser) return;
+        if (targetUid === "CONSENSUS") {
+          showToast("संयुक्त व्यू में रीसेट करने के लिए पहले किसी विशेष ID को चुनें!");
+          return;
+        }
+        pendingResetTarget = targetUid;
+        const msgEl = document.getElementById("resetConfirmMessage");
+        if (targetUid === "ALL_USERS") {
+          msgEl.innerHTML = `क्या आप वाकई <strong>सभी 10 सर्वेयर आईडी (MP01 से MP10) और ADMIN</strong> का सेव किया गया पूरा सर्वे डेटा शून्य (<strong>0</strong>) करना चाहते हैं? इसके बाद सभी आईडी नए सिरे से सर्वे भर सकेंगी।`;
+        } else {
+          const acc = multiDB.accounts[targetUid] || { id: targetUid, username: targetUid, name: targetUid };
+          const st = getUserStats(targetUid);
+          msgEl.innerHTML = `क्या आप वाकई आईडी <strong>${targetUid} (${acc.username || targetUid} — ${acc.name})</strong> का सेव किया गया सर्वे डेटा (<strong>${st.surveyedFams} परिवार / ${st.ourVotes} हमारे वोट / ${st.oppVotes} विरोधी वोट</strong>) रीसेट करके शून्य (<strong>0</strong>) करना चाहते हैं?`;
+        }
+        const m = document.getElementById("resetConfirmModal");
+        m.classList.remove("hidden");
+        m.classList.add("flex");
+        refreshIcons();
+      }
+
+      function closeResetConfirmModal() {
+        pendingResetTarget = null;
+        const m = document.getElementById("resetConfirmModal");
+        m.classList.add("hidden");
+        m.classList.remove("flex");
+      }
+
+      function executeUserReset(uid) {
+        const nowTs = Date.now();
+        multiDB.users[uid] = {
+          families: {},
+          voters: {},
+          updatedAt: "डेटा रीसेट किया गया (" + new Date().toLocaleTimeString("hi-IN", { hour: "2-digit", minute: "2-digit" }) + ")",
+          _ts: nowTs,
+          resetAt: nowTs
+        };
+        pushUserSnapshotToCloud(uid);
+      }
+
+      document.getElementById("btnCloseResetModal").addEventListener("click", closeResetConfirmModal);
+      document.getElementById("btnCancelResetModal").addEventListener("click", closeResetConfirmModal);
+      document.getElementById("btnConfirmResetExecute").addEventListener("click", () => {
+        if (!pendingResetTarget) return;
+        const target = pendingResetTarget;
+        closeResetConfirmModal();
+        closeProfileModal();
+        if (target === "ALL_USERS") {
+          USER_IDS_ORDER.forEach(u => executeUserReset(u));
+          syncAppStatePointer();
+          saveLocalOnly();
+          updateTopKPIs();
+          renderFamilies();
+          renderVoters();
+          renderDashboard();
+          if (currentLoggedInUser === "ADMIN") renderAdminPanel();
+          showToast("🗑️ सभी आईडी का सर्वे डेटा रीसेट (0) कर दिया गया है!");
+        } else {
+          executeUserReset(target);
+          syncAppStatePointer();
+          saveLocalOnly();
+          updateTopKPIs();
+          renderFamilies();
+          renderVoters();
+          renderDashboard();
+          if (currentLoggedInUser === "ADMIN") renderAdminPanel();
+          showToast(`🗑️ आईडी [${target}] का सर्वे डेटा शून्य (0) कर दिया गया! अब आप दोबारा भर सकते हैं।`);
+        }
+      });
+
+      // Trigger Reset Data for current user / active workspace from Header, Mobile Menu, or Profile Modal
+      const triggerMyDataReset = () => {
+        mobMenu.classList.add("hidden");
+        const target = activeTargetUser === "CONSENSUS" ? currentLoggedInUser : activeTargetUser;
+        openResetConfirmModal(target);
+      };
+      document.getElementById("btnResetMyData").addEventListener("click", triggerMyDataReset);
+      document.getElementById("btnMobileResetMyData").addEventListener("click", triggerMyDataReset);
+      document.getElementById("btnProfileResetMyData").addEventListener("click", triggerMyDataReset);
+      document.getElementById("btnAdminResetAllUsers").addEventListener("click", () => {
+        if (currentLoggedInUser !== "ADMIN") return;
+        openResetConfirmModal("ALL_USERS");
       });
 
       // Admin Workspace Switcher
@@ -2210,20 +2407,29 @@
         const passUid = e.target.getAttribute("data-edit-pass");
         if (unameUid && multiDB.accounts[unameUid]) {
           multiDB.accounts[unameUid].username = e.target.value.trim() || unameUid;
+          multiDB.accounts[unameUid]._accTs = Date.now();
           saveState();
+          pushUserSnapshotToCloud(unameUid);
           updateProfileCornerUI();
-          showToast(`${unameUid} का यूजरनेम अपडेट हो गया!`);
+          renderAdminPanel();
+          showToast(`✅ ${unameUid} का यूजरनेम अपडेट व सिंक हो गया!`);
         }
         if (nameUid && multiDB.accounts[nameUid]) {
           multiDB.accounts[nameUid].name = e.target.value.trim() || DEFAULT_ACCOUNTS[nameUid].name;
+          multiDB.accounts[nameUid]._accTs = Date.now();
           saveState();
+          pushUserSnapshotToCloud(nameUid);
           updateProfileCornerUI();
-          showToast(`${nameUid} का नाम अपडेट हो गया!`);
+          renderAdminPanel();
+          showToast(`✅ ${nameUid} का नाम अपडेट व सिंक हो गया!`);
         }
         if (passUid && multiDB.accounts[passUid]) {
           multiDB.accounts[passUid].pass = e.target.value.trim() || DEFAULT_ACCOUNTS[passUid].pass;
+          multiDB.accounts[passUid]._accTs = Date.now();
           saveState();
-          showToast(`${passUid} का पासवर्ड अपडेट हो गया!`);
+          pushUserSnapshotToCloud(passUid);
+          renderAdminPanel();
+          showToast(`🔑 ${passUid} का नया पासवर्ड सेव व सिंक हो गया!`);
         }
       });
 
@@ -2309,14 +2515,53 @@
           showToast(`${uid} का सर्वे डेटा खोला गया!`);
         } else if (act === "admin-clear-user") {
           const uid = btn.getAttribute("data-uid");
-          multiDB.users[uid] = { families: {}, voters: {}, updatedAt: "रीसेट किया गया" };
-          syncAppStatePointer();
+          openResetConfirmModal(uid);
+        } else if (act === "admin-gen-pass") {
+          if (currentLoggedInUser !== "ADMIN") return;
+          const uid = btn.getAttribute("data-uid");
+          if (!uid || !multiDB.accounts[uid]) return;
+          const randNum = Math.floor(1000 + Math.random() * 9000);
+          const prefix = uid === "ADMIN" ? "Adm#" : uid.toLowerCase() + "@";
+          const newPass = prefix + randNum;
+          multiDB.accounts[uid].pass = newPass;
+          multiDB.accounts[uid]._accTs = Date.now();
           saveState();
-          renderFamilies();
-          renderVoters();
-          renderDashboard();
+          pushUserSnapshotToCloud(uid);
           renderAdminPanel();
-          showToast(`${uid} का डेटा रीसेट कर दिया गया!`);
+          const uname = multiDB.accounts[uid].username || uid;
+          copyTextSafe(`🗳️ ग्राम पंचायत महाराजपुरा लॉगिन विवरण:
+• सिस्टम ID: ${uid}
+• यूजरनेम: ${uname}
+• नया पासवर्ड: ${newPass}`);
+          showToast(`🎲 ${uid} (${uname}) का नया पासवर्ड [${newPass}] जनरेट व कॉपी हो गया!`);
+        } else if (act === "admin-reset-pass") {
+          if (currentLoggedInUser !== "ADMIN") return;
+          const uid = btn.getAttribute("data-uid");
+          if (!uid || !multiDB.accounts[uid]) return;
+          const defPass = DEFAULT_ACCOUNTS[uid].pass;
+          multiDB.accounts[uid].pass = defPass;
+          multiDB.accounts[uid]._accTs = Date.now();
+          saveState();
+          pushUserSnapshotToCloud(uid);
+          renderAdminPanel();
+          const uname = multiDB.accounts[uid].username || uid;
+          copyTextSafe(`🗳️ ग्राम पंचायत महाराजपुरा लॉगिन विवरण:
+• सिस्टम ID: ${uid}
+• यूजरनेम: ${uname}
+• पासवर्ड: ${defPass}`);
+          showToast(`🔑 ${uid} (${uname}) का पासवर्ड डिफ़ॉल्ट [${defPass}] पर रीसेट व कॉपी हो गया!`);
+        } else if (act === "admin-copy-single-cred") {
+          if (currentLoggedInUser !== "ADMIN") return;
+          const uid = btn.getAttribute("data-uid");
+          if (!uid || !multiDB.accounts[uid]) return;
+          const a = multiDB.accounts[uid];
+          const text = `🗳️ *ग्राम पंचायत महाराजपुरा लॉगिन*
+• सिस्टम ID: *${a.id}*
+• यूजरनेम: *${a.username || a.id}*
+• पासवर्ड: *${a.pass}*
+• नाम: ${a.name}`;
+          copyTextSafe(text);
+          showToast(`📋 ${uid} का यूजरनेम और पासवर्ड कॉपी हो गया!`);
         }
       });
 
@@ -2460,43 +2705,6 @@
       };
       document.getElementById("btnExportCSV").addEventListener("click", exportCSVFn);
       document.getElementById("btnMobileCSV").addEventListener("click", exportCSVFn);
-
-      // Download Full HTML File Handler
-      const downloadHTMLFileFn = () => {
-        mobMenu.classList.add("hidden");
-        const clone = document.documentElement.cloneNode(true);
-        const bodyClone = clone.querySelector("body");
-        if (bodyClone) {
-          bodyClone.classList.remove("is-authenticated");
-        }
-        const loginOv = clone.querySelector("#loginOverlay");
-        if (loginOv) {
-          loginOv.classList.remove("hidden");
-          loginOv.style.display = "flex";
-        }
-        const protShell = clone.querySelector("#appProtectedShell");
-        if (protShell) {
-          protShell.classList.add("hidden");
-          protShell.style.display = "none";
-        }
-        const htmlContent = "<!DOCTYPE html>\n" + clone.outerHTML;
-        const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "Gram_Panchayat_Maharajpura_Master_Tracker.html";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast("HTML फाइल डाउनलोड शुरू हो गई!");
-      };
-      const btnDlHtml = document.getElementById("btnDownloadHTML");
-      if (btnDlHtml) btnDlHtml.addEventListener("click", downloadHTMLFileFn);
-      const btnMobDlHtml = document.getElementById("btnMobileDownloadHTML");
-      if (btnMobDlHtml) btnMobDlHtml.addEventListener("click", downloadHTMLFileFn);
-      const btnLoginDlHtml = document.getElementById("btnLoginDownloadHTML");
-      if (btnLoginDlHtml) btnLoginDlHtml.addEventListener("click", downloadHTMLFileFn);
 
       // Backup JSON (Desktop & Mobile)
       const backupJSONFn = () => {
