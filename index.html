@@ -886,6 +886,55 @@
     const MULTI_DB_KEY = "maharajpura_sarpanch_multiuser_db_2026_v2";
     const MULTI_DB_KEY_V3 = "maharajpura_sarpanch_multi_db_v3";
     const SESSION_KEY = "maharajpura_sarpanch_active_session_v3";
+    const SESSION_TTL_MS = 24 * 60 * 60 * 1000; // 24 Hours in milliseconds (86,400,000 ms)
+    let currentActiveTab = "families";
+
+    function savePersistentSession(uid, targetUser, tabName) {
+      if (!uid) return;
+      const now = Date.now();
+      const sessObj = {
+        uid: uid,
+        activeTarget: targetUser || uid,
+        activeTab: tabName || currentActiveTab || "families",
+        lastActiveAt: now
+      };
+      const raw = JSON.stringify(sessObj);
+      try { localStorage.setItem(SESSION_KEY, raw); } catch (e) {}
+      try { sessionStorage.setItem(SESSION_KEY, raw); } catch (e) {}
+    }
+
+    function loadValidPersistentSession() {
+      try {
+        const raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+        if (!raw) return null;
+        // Handle legacy plain string UID if present
+        if (multiDB.accounts[raw]) {
+          return { uid: raw, activeTarget: raw, activeTab: "families", lastActiveAt: Date.now() };
+        }
+        const parsed = JSON.parse(raw);
+        if (!parsed || !parsed.uid || !multiDB.accounts[parsed.uid]) return null;
+        const lastActive = parsed.lastActiveAt || 0;
+        const elapsed = Date.now() - lastActive;
+        if (elapsed >= SESSION_TTL_MS) {
+          // Expired after 24 hours of inactivity
+          try { localStorage.removeItem(SESSION_KEY); } catch (e) {}
+          try { sessionStorage.removeItem(SESSION_KEY); } catch (e) {}
+          return null;
+        }
+        return parsed;
+      } catch (e) {
+        return null;
+      }
+    }
+
+    let _lastActivityWriteTs = 0;
+    function touchSessionActivity() {
+      if (!currentLoggedInUser) return;
+      const now = Date.now();
+      if (now - _lastActivityWriteTs < 15000) return; // Throttle writes to once every 15s
+      _lastActivityWriteTs = now;
+      savePersistentSession(currentLoggedInUser, activeTargetUser, currentActiveTab);
+    }
     // Built-in Zero-Config Real-Time Cloud Sync Topic (ntfy.sh JSON pub/sub + SSE)
     const BUILTIN_CLOUD_TOPIC = "mhp_sarpanch_2026_autocloud_v3_9x7k2m";
     const BUILTIN_CLOUD_BASE = "https://ntfy.sh/" + BUILTIN_CLOUD_TOPIC;
@@ -2117,6 +2166,10 @@
     }
 
     function switchTab(tab) {
+      if (tab === "admin" && currentLoggedInUser !== "ADMIN") {
+        tab = "families";
+      }
+      currentActiveTab = tab;
       document.querySelectorAll(".nav-tab").forEach(b => {
         const isMatch = b.getAttribute("data-tab") === tab;
         b.classList.toggle("tab-active", isMatch);
@@ -2128,18 +2181,30 @@
       document.getElementById("view-voters").classList.toggle("hidden", tab !== "voters");
       document.getElementById("view-dashboard").classList.toggle("hidden", tab !== "dashboard");
       document.getElementById("view-admin").classList.toggle("hidden", tab !== "admin");
+      if (currentLoggedInUser) {
+        savePersistentSession(currentLoggedInUser, activeTargetUser, currentActiveTab);
+      }
     }
 
-    function performLogout() {
+    function performLogout(reasonMsg) {
       currentLoggedInUser = null;
       activeTargetUser = "ADMIN";
+      currentActiveTab = "families";
+      try { localStorage.removeItem(SESSION_KEY); } catch (err) {}
       try { sessionStorage.removeItem(SESSION_KEY); } catch (err) {}
       const uInp = document.getElementById("loginUserId");
       const pInp = document.getElementById("loginPassword");
       const errBox = document.getElementById("loginErrorBox");
       if (uInp) uInp.value = "";
       if (pInp) pInp.value = "";
-      if (errBox) errBox.classList.add("hidden");
+      if (errBox) {
+        if (reasonMsg && typeof reasonMsg === "string") {
+          errBox.textContent = reasonMsg;
+          errBox.classList.remove("hidden");
+        } else {
+          errBox.classList.add("hidden");
+        }
+      }
       switchTab("families");
       applyLoggedInUI();
     }
@@ -2149,10 +2214,32 @@
       loadState();
       refreshIcons();
 
-      // Strictly start logged out at Step 1 (Login Screen)
-      currentLoggedInUser = null;
-      applyLoggedInUI();
+      // Restore active session on page refresh if logged in within the last 24 hours
+      const restoredSession = loadValidPersistentSession();
+      if (restoredSession && restoredSession.uid) {
+        currentLoggedInUser = restoredSession.uid;
+        activeTargetUser = (currentLoggedInUser === "ADMIN" && restoredSession.activeTarget)
+          ? restoredSession.activeTarget
+          : currentLoggedInUser;
+        currentActiveTab = restoredSession.activeTab || "families";
+        savePersistentSession(currentLoggedInUser, activeTargetUser, currentActiveTab);
+        applyLoggedInUI();
+        switchTab(currentActiveTab);
+      } else {
+        currentLoggedInUser = null;
+        applyLoggedInUI();
+      }
       startLiveCloudStream();
+
+      // Keep 24-hour activity timer fresh on user interaction & check expiry every 60s
+      ["click", "keydown", "touchstart", "scroll"].forEach(evtName => {
+        window.addEventListener(evtName, touchSessionActivity, { passive: true });
+      });
+      setInterval(() => {
+        if (currentLoggedInUser && !loadValidPersistentSession()) {
+          performLogout("⏰ 24 घंटे की निष्क्रियता के कारण सेशन समाप्त हो गया। कृपया पुनः लॉगिन करें।");
+        }
+      }, 60000);
 
       // Sync & Refresh buttons
       const triggerRefresh = () => {
@@ -2194,16 +2281,18 @@
         errBox.classList.add("hidden");
         currentLoggedInUser = uid;
         activeTargetUser = uid;
-        try { sessionStorage.setItem(SESSION_KEY, uid); } catch (err) {}
+        currentActiveTab = "families";
+        savePersistentSession(uid, uid, "families");
         document.getElementById("loginPassword").value = "";
         applyLoggedInUI();
+        switchTab("families");
         pullFromCloudAuto(false);
         showToast(`✅ स्वागत है: ${acc.name} (${acc.username || acc.id})`);
       });
 
       // Logout Buttons (Desktop & Mobile)
-      document.getElementById("btnLogout").addEventListener("click", performLogout);
-      document.getElementById("btnMobileLogout").addEventListener("click", performLogout);
+      document.getElementById("btnLogout").addEventListener("click", () => performLogout());
+      document.getElementById("btnMobileLogout").addEventListener("click", () => performLogout());
 
       // Mobile 3-Dot Menu Toggle & Outside Click Close
       const mobBtn = document.getElementById("btnMobileMenuToggle");
@@ -2350,6 +2439,7 @@
       document.getElementById("adminTargetUserSelect").addEventListener("change", e => {
         if (currentLoggedInUser !== "ADMIN") return;
         activeTargetUser = e.target.value;
+        savePersistentSession(currentLoggedInUser, activeTargetUser, currentActiveTab);
         syncAppStatePointer();
         updateInspectBanner();
         updateTopKPIs();
