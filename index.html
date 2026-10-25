@@ -378,10 +378,12 @@
         <!-- Filter & Search Controls -->
         <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200/90 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
           <div class="sm:col-span-4">
-            <label class="block text-xs font-bold text-slate-600 mb-1">परिवार / मुखिया / मकान नंबर खोजें</label>
-            <div class="relative">
+            <label class="block text-xs font-bold text-slate-600 mb-1">परिवार / मुखिया / मकान नंबर खोजें <span class="text-[10px] font-semibold text-blue-700">(मात्रा व मिलते-जुलते नाम स्मार्ट सर्च)</span></label>
+            <div class="relative" id="famSearchWrap">
               <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-              <input type="text" id="famSearchInput" placeholder="मुखिया का नाम, मकान नं., या सदस्य..." class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-300 focus:border-blue-600 focus:outline-none">
+              <input type="text" id="famSearchInput" autocomplete="off" placeholder="मुखिया का नाम, मकान नं., या सदस्य..." class="w-full pl-9 pr-8 py-2 text-sm rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+              <button type="button" id="btnClearFamSearch" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold items-center justify-center" title="सर्च साफ़ करें">✕</button>
+              <div id="famSearchSuggestions" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-2xl border border-slate-300 max-h-80 overflow-y-auto z-40 divide-y divide-slate-100"></div>
             </div>
           </div>
           <div class="sm:col-span-2">
@@ -437,10 +439,12 @@
       <section id="view-voters" class="space-y-4 hidden">
         <div class="bg-white rounded-2xl p-3 sm:p-4 shadow-sm border border-slate-200/90 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
           <div class="sm:col-span-4">
-            <label class="block text-xs font-bold text-slate-600 mb-1">मतदाता खोजें (नाम, पिता/पति, EPIC, मकान, क्र.)</label>
-            <div class="relative">
+            <label class="block text-xs font-bold text-slate-600 mb-1">मतदाता खोजें <span class="text-[10px] font-semibold text-blue-700">(मात्रा / स्पेलिंग मिस्टेक स्मार्ट ऑटो-सर्च)</span></label>
+            <div class="relative" id="voterSearchWrap">
               <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-              <input type="text" id="voterSearchInput" placeholder="जैसे: रामकिशन, ZHU..., मकान 14, या क्र. 105" class="w-full pl-9 pr-3 py-2 text-sm rounded-xl border border-slate-300 focus:border-blue-600 focus:outline-none">
+              <input type="text" id="voterSearchInput" autocomplete="off" placeholder="जैसे: अजीत/अजित, राम केस/रामकेश, मकान 14..." class="w-full pl-9 pr-8 py-2 text-sm rounded-xl border border-slate-300 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none">
+              <button type="button" id="btnClearVoterSearch" class="hidden absolute right-2.5 top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-bold items-center justify-center" title="सर्च साफ़ करें">✕</button>
+              <div id="voterSearchSuggestions" class="hidden absolute left-0 right-0 top-full mt-1.5 bg-white rounded-2xl shadow-2xl border border-slate-300 max-h-80 overflow-y-auto z-40 divide-y divide-slate-100"></div>
             </div>
           </div>
           <div class="sm:col-span-2">
@@ -1677,28 +1681,487 @@
       reader.readAsDataURL(file);
     }
 
+    // ---------------- SMART HINDI PHONETIC, MATRA-TOLERANT & FUZZY SEARCH ENGINE ----------------
+    // Normalizes Hindi matras (ि/ी, ु/ू, े/ै, ो/ौ), bindu/half-nasals (ं/ँ/न्/म्), and similar consonants (श/ष/स, ण/न, व/ब, क्ष/छ)
+    function normalizeHindiPhonetic(str) {
+      if (!str) return "";
+      let s = String(str).toLowerCase().trim();
+      // Remove spaces, punctuation, zero-width chars, and nukta
+      s = s.replace(/[\s\-.,/_()\[\]\u200B-\u200D\uFEFF\u093C]+/g, "");
+      // Common conjunct equivalences before stripping halant
+      s = s.replace(/क्ष/g, "छ").replace(/ज्ञ/g, "गय").replace(/त्र/g, "तर").replace(/श्र/g, "सर").replace(/द्ध/g, "द");
+      // Normalize independent vowels (long -> short/canonical)
+      s = s.replace(/आ/g, "अ").replace(/ई/g, "इ").replace(/ऊ/g, "उ").replace(/ऐ/g, "ए").replace(/[औऑ]/g, "ओ").replace(/ऋ/g, "रि");
+      // Normalize dependent vowel signs / matras (ी -> ि, ू -> ु, ै -> े, ौ/ॉ -> ो, ृ -> रि)
+      s = s.replace(/\u0940/g, "\u093F") // ी -> ि (अजीत === अजित, सुनीता === सुनिता)
+           .replace(/\u0942/g, "\u0941") // ू -> ु (फूल === फुल, रूकमणी === रुकमणी)
+           .replace(/\u0948/g, "\u0947") // ै -> े (कैलाश === केलाश, बैरवा === बेरवा)
+           .replace(/[\u094C\u0949]/g, "\u094B") // ौ, ॉ -> ो (सॉवताराम === सोवताराम)
+           .replace(/\u0943/g, "रि"); // ृ -> रि (कृष्णा === करिश्ना)
+      // Normalize anusvara / chandrabindu / visarga to 'न' so संतोष === सन्तोष, मंजू === मन्जु, चंदा === चन्दा
+      s = s.replace(/[\u0901\u0902]/g, "न").replace(/\u0903/g, "");
+      // Remove halant (virama) so half-letters match full letters (सन्तोष -> सनतोस, मन्जु -> मनजु)
+      s = s.replace(/\u094D/g, "");
+      // Normalize similar-sounding consonants
+      s = s.replace(/[शष]/g, "स") // रामकेश === रामकेस, किशन === किसन
+           .replace(/ण/g, "न")    // मीणा === मीना, नारायण === नारायन
+           .replace(/[ङञ]/g, "न")
+           .replace(/व/g, "ब")    // बैरवा === बैरबा, बीरबल === वीरबल
+           .replace(/ड़/g, "ड")
+           .replace(/ढ़/g, "ढ");
+      // Collapse consecutive identical characters (e.g. लल्ली -> लली, मुन्ना -> मुना)
+      s = s.replace(/(.)\1+/g, "$1");
+      return s;
+    }
+
+    // Soft skeleton: strips ा, ि, ी, े, ै (matras commonly omitted or swapped like राम केस vs राम कस vs रामकेश),
+    // while keeping ु/ू and ो/ौ distinct so सुनिता does not collide with शांति
+    function getHindiSoftSkeleton(str) {
+      if (!str) return "";
+      let p = normalizeHindiPhonetic(str);
+      p = p.replace(/[\u093E\u093F\u0947]/g, "");
+      p = p.replace(/(.)\1+/g, "$1");
+      return p;
+    }
+
+    // Strips all vowel matras (ा, ि, ी, ु, ू, े, ै, ो, ौ) so "राम केस" and "राम कस" and "रामकेश" all become "रमकस"
+    function getHindiConsonantSkeleton(str) {
+      if (!str) return "";
+      let p = normalizeHindiPhonetic(str);
+      p = p.replace(/[\u093E-\u094C\u093A\u093B\u094E\u094F\u0955-\u0957]/g, "");
+      p = p.replace(/[अआइईउऊएऐओऔऑ]/g, "अ");
+      p = p.replace(/(.)\1+/g, "$1");
+      return p;
+    }
+
+    // Bounded Levenshtein edit distance for typo & matra error tolerance
+    function editDistanceBounded(a, b, maxDist) {
+      if (a === b) return 0;
+      const la = a.length, lb = b.length;
+      if (Math.abs(la - lb) > maxDist) return maxDist + 1;
+      if (la === 0) return lb;
+      if (lb === 0) return la;
+      let prev = new Array(lb + 1);
+      let curr = new Array(lb + 1);
+      for (let j = 0; j <= lb; j++) prev[j] = j;
+      for (let i = 1; i <= la; i++) {
+        curr[0] = i;
+        let minRow = curr[0];
+        const ca = a.charCodeAt(i - 1);
+        for (let j = 1; j <= lb; j++) {
+          const cost = ca === b.charCodeAt(j - 1) ? 0 : 1;
+          curr[j] = Math.min(prev[j] + 1, curr[j - 1] + 1, prev[j - 1] + cost);
+          if (curr[j] < minRow) minRow = curr[j];
+        }
+        if (minRow > maxDist) return maxDist + 1;
+        const tmp = prev; prev = curr; curr = tmp;
+      }
+      return prev[lb];
+    }
+
+    // Precompute normalized search keys on all voters and families for instant 0ms matching
+    let _searchIndexBuilt = false;
+    function ensureSearchIndex() {
+      if (_searchIndexBuilt) return;
+      RAW_DATA.voters.forEach(v => {
+        v._nLower = (v.n || "").toLowerCase().trim();
+        v._rnLower = (v.rn || "").toLowerCase().trim();
+        v._nNoSpace = v._nLower.replace(/\s+/g, "");
+        v._rnNoSpace = v._rnLower.replace(/\s+/g, "");
+        v._nPhon = normalizeHindiPhonetic(v.n);
+        v._rnPhon = normalizeHindiPhonetic(v.rn);
+        v._nSoft = getHindiSoftSkeleton(v.n);
+        v._rnSoft = getHindiSoftSkeleton(v.rn);
+        v._nSkel = getHindiConsonantSkeleton(v.n);
+        v._rnSkel = getHindiConsonantSkeleton(v.rn);
+        v._nWords = (v.n || "").trim().split(/\s+/).map(w => ({
+          raw: w.toLowerCase(),
+          phon: normalizeHindiPhonetic(w),
+          soft: getHindiSoftSkeleton(w),
+          skel: getHindiConsonantSkeleton(w)
+        }));
+        v._rnWords = (v.rn || "").trim().split(/\s+/).map(w => ({
+          raw: w.toLowerCase(),
+          phon: normalizeHindiPhonetic(w),
+          soft: getHindiSoftSkeleton(w),
+          skel: getHindiConsonantSkeleton(w)
+        }));
+      });
+      RAW_DATA.families.forEach(f => {
+        f._hdLower = (f.hd || "").toLowerCase().trim();
+        f._hrLower = (f.hr || "").toLowerCase().trim();
+        f._hdPhon = normalizeHindiPhonetic(f.hd);
+        f._hrPhon = normalizeHindiPhonetic(f.hr);
+        f._hdSoft = getHindiSoftSkeleton(f.hd);
+        f._hrSoft = getHindiSoftSkeleton(f.hr);
+        f._hdSkel = getHindiConsonantSkeleton(f.hd);
+        f._hrSkel = getHindiConsonantSkeleton(f.hr);
+      });
+      _searchIndexBuilt = true;
+    }
+
+    // Score how well a single target text matches query
+    function scoreHindiTextMatch(tLower, tNoSpace, tPhon, tSoft, tSkel, tWords, qInfo) {
+      const { qLower, qNoSpace, qPhon, qSoft, qSkel, qWords } = qInfo;
+      if (!qNoSpace) return { score: 100, matchType: "exact" };
+
+      // 1. Exact or prefix or substring match on raw text
+      if (tLower === qLower || tNoSpace === qNoSpace) return { score: 100, matchType: "exact" };
+      if (tLower.startsWith(qLower) || tNoSpace.startsWith(qNoSpace)) return { score: 98, matchType: "exact" };
+      if (tWords && tWords.some(w => w.raw === qLower || w.raw.startsWith(qLower))) return { score: 96, matchType: "exact" };
+      if (tLower.includes(qLower) || tNoSpace.includes(qNoSpace)) return { score: 94, matchType: "exact" };
+
+      // 2. Phonetic & Matra-Normalized Match (e.g. अजीत <-> अजित, सुनीता <-> सुनिता, राम केस <-> रामकेश)
+      if (qPhon.length >= 1) {
+        if (tPhon === qPhon) return { score: 92, matchType: "matra" };
+        if (tPhon.startsWith(qPhon)) return { score: 90, matchType: "matra" };
+        if (tWords && tWords.some(w => w.phon === qPhon || w.phon.startsWith(qPhon))) return { score: 88, matchType: "matra" };
+        if (qPhon.length >= 2 && tPhon.includes(qPhon)) return { score: 86, matchType: "matra" };
+      }
+
+      // 3. Soft Skeleton Match (strips ा, ि, ी, े, ै so "राम केस" === "राम कस" === "रामकेश" === "रामकिश")
+      if (qSoft.length >= 2) {
+        if (tSoft === qSoft) return { score: 85, matchType: "skeleton" };
+        if (tSoft.startsWith(qSoft)) return { score: 83, matchType: "skeleton" };
+        if (tWords && tWords.some(w => w.soft === qSoft || w.soft.startsWith(qSoft))) return { score: 81, matchType: "skeleton" };
+        if (qSoft.length >= 3 && tSoft.includes(qSoft)) return { score: 79, matchType: "skeleton" };
+      }
+
+      // 4. Multi-word token progressive matching (e.g. "राम के", "राम बैरवा")
+      if (qWords.length > 1 && tWords && tWords.length > 0) {
+        let allWordsMatched = true;
+        let allExact = true;
+        for (const qw of qWords) {
+          let wordHit = false;
+          for (const tw of tWords) {
+            if (tw.raw.startsWith(qw.raw)) { wordHit = true; break; }
+            if (qw.phon && tw.phon.startsWith(qw.phon)) { wordHit = true; allExact = false; break; }
+            if (qw.soft.length >= 2 && tw.soft.startsWith(qw.soft)) { wordHit = true; allExact = false; break; }
+          }
+          if (!wordHit) { allWordsMatched = false; break; }
+        }
+        if (allWordsMatched) {
+          return { score: allExact ? 93 : 80, matchType: allExact ? "exact" : "matra" };
+        }
+      }
+
+      // 5. Fuzzy / Similar Word Match (स्पेलिंग मिस्टेक या मिलते-जुलते नाम जैसे अजीत -> अजय / रणजीत / जितेंद्र)
+      if (qSkel.length >= 3) {
+        const firstWord = tWords && tWords[0] ? tWords[0] : { phon: tPhon, soft: tSoft, skel: tSkel };
+        // Shared first 2 consonants + edit distance <= 1 on skeleton (e.g. अजीत ("अजत") -> अजय ("अजय"))
+        if (firstWord.skel.slice(0, 2) === qSkel.slice(0, 2) && editDistanceBounded(qSkel, firstWord.skel, 1) <= 1) {
+          return { score: 76, matchType: "similar" };
+        }
+        // Phonetic root stem match (e.g. "अजीत" -> "जित" matches "रणजीत", "जितेंद्र", "जितु")
+        if (qPhon.length >= 3) {
+          const rootPhon = qPhon.slice(1);
+          if (rootPhon.length >= 3 && (firstWord.phon.endsWith(rootPhon) || firstWord.phon.startsWith(rootPhon))) {
+            return { score: 74, matchType: "similar" };
+          }
+        }
+        // Same first letter and edit distance <= 1 on soft skeleton or consonant skeleton
+        if (firstWord.skel[0] === qSkel[0]) {
+          if (editDistanceBounded(qSoft, firstWord.soft, 1) <= 1) {
+            return { score: 70, matchType: "similar" };
+          }
+          if (editDistanceBounded(qSkel, firstWord.skel, 1) <= 1) {
+            return { score: 66, matchType: "similar" };
+          }
+        }
+      }
+
+      return { score: 0, matchType: "none" };
+    }
+
+    function buildQueryInfo(rawQuery) {
+      const qLower = (rawQuery || "").trim().toLowerCase();
+      const qNoSpace = qLower.replace(/\s+/g, "");
+      const qPhon = normalizeHindiPhonetic(qLower);
+      const qSoft = getHindiSoftSkeleton(qLower);
+      const qSkel = getHindiConsonantSkeleton(qLower);
+      const qWords = qLower.split(/\s+/).filter(Boolean).map(w => ({
+        raw: w,
+        phon: normalizeHindiPhonetic(w),
+        soft: getHindiSoftSkeleton(w),
+        skel: getHindiConsonantSkeleton(w)
+      }));
+      return { qLower, qNoSpace, qPhon, qSoft, qSkel, qWords };
+    }
+
+    // Score a voter against query (checks voter name, father/husband name, EPIC, house no, serial no)
+    function scoreVoterMatch(v, qInfo) {
+      ensureSearchIndex();
+      const { qLower, qNoSpace } = qInfo;
+      if (!qNoSpace) return { score: 100, matchType: "exact", matchedField: "name" };
+
+      if (String(v.s) === qNoSpace || "#" + String(v.s) === qNoSpace) {
+        return { score: 100, matchType: "exact", matchedField: "sno" };
+      }
+      if (String(v.h).toLowerCase() === qNoSpace || ("मकान" + String(v.h).toLowerCase()) === qNoSpace) {
+        return { score: 99, matchType: "exact", matchedField: "house" };
+      }
+      if (v.ep && v.ep.toLowerCase().includes(qNoSpace)) {
+        return { score: 97, matchType: "exact", matchedField: "epic" };
+      }
+
+      const nameRes = scoreHindiTextMatch(v._nLower, v._nNoSpace, v._nPhon, v._nSoft, v._nSkel, v._nWords, qInfo);
+      const rnRes = scoreHindiTextMatch(v._rnLower, v._rnNoSpace, v._rnPhon, v._rnSoft, v._rnSkel, v._rnWords, qInfo);
+
+      const adjRnScore = rnRes.score > 0 ? Math.max(1, rnRes.score - 5) : 0;
+      if (nameRes.score >= adjRnScore && nameRes.score > 0) {
+        return { score: nameRes.score, matchType: nameRes.matchType, matchedField: "name" };
+      }
+      if (adjRnScore > 0) {
+        return { score: adjRnScore, matchType: rnRes.matchType, matchedField: "relation" };
+      }
+      return { score: 0, matchType: "none", matchedField: "none" };
+    }
+
+    // Score a family against query (checks head name, relation, house no, mohalla, and family members)
+    function scoreFamilyMatch(fam, qInfo) {
+      ensureSearchIndex();
+      const { qLower, qNoSpace } = qInfo;
+      if (!qNoSpace) return { score: 100, matchType: "exact", matchedVoter: null };
+
+      if (String(fam.h).toLowerCase() === qNoSpace || fam.id.toLowerCase().includes(qNoSpace)) {
+        return { score: 100, matchType: "exact", matchedVoter: null };
+      }
+      if (fam.mh && fam.mh.toLowerCase().includes(qLower)) {
+        return { score: 90, matchType: "exact", matchedVoter: null };
+      }
+
+      // Check family members (which includes the head)
+      let bestScore = 0;
+      let bestType = "none";
+      let bestMember = null;
+      const members = RAW_DATA.voters.filter(v => v.fid === fam.id);
+      for (const m of members) {
+        const mRes = scoreVoterMatch(m, qInfo);
+        const isHead = m.n === fam.hd;
+        const effectiveScore = isHead ? mRes.score + 2 : mRes.score;
+        if (effectiveScore > bestScore) {
+          bestScore = effectiveScore;
+          bestType = mRes.matchType;
+          bestMember = m;
+        }
+      }
+      return { score: bestScore, matchType: bestType, matchedVoter: bestMember };
+    }
+
+    // Render Live Auto-Suggest Dropdown under Voter Search Input
+    function updateVoterSearchSuggestions() {
+      const inputEl = document.getElementById("voterSearchInput");
+      const box = document.getElementById("voterSearchSuggestions");
+      const clearBtn = document.getElementById("btnClearVoterSearch");
+      if (!inputEl || !box) return;
+
+      const rawQ = (inputEl.value || "").trim();
+      if (clearBtn) {
+        clearBtn.classList.toggle("hidden", !rawQ);
+        clearBtn.classList.toggle("flex", !!rawQ);
+      }
+
+      if (!rawQ || document.activeElement !== inputEl) {
+        box.classList.add("hidden");
+        box.innerHTML = "";
+        return;
+      }
+
+      const qInfo = buildQueryInfo(rawQ);
+      const wFilter = document.getElementById("voterWardSelect").value;
+
+      const scored = [];
+      for (const v of RAW_DATA.voters) {
+        if (wFilter !== "ALL" && String(v.w) !== wFilter) continue;
+        const res = scoreVoterMatch(v, qInfo);
+        if (res.score > 0) {
+          scored.push({ v, score: res.score, matchType: res.matchType, matchedField: res.matchedField });
+        }
+      }
+
+      scored.sort((a, b) => b.score - a.score || a.v.w - b.v.w || a.v.s - b.v.s);
+
+      if (scored.length === 0) {
+        box.innerHTML = `
+          <div class="p-3 text-xs text-slate-500 text-center">
+            "${rawQ}" से मिलता-जुलता कोई नाम नहीं मिला। कृपया शुरुआती अक्षर लिखें।
+          </div>
+        `;
+        box.classList.remove("hidden");
+        return;
+      }
+
+      // Collect top unique matching names for 1-tap quick chips
+      const uniqueNameCounts = new Map();
+      scored.forEach(item => {
+        const keyName = item.matchedField === "relation" ? item.v.rn : item.v.n;
+        if (!uniqueNameCounts.has(keyName)) {
+          uniqueNameCounts.set(keyName, { count: 0, matchType: item.matchType });
+        }
+        uniqueNameCounts.get(keyName).count++;
+      });
+      const topUniqueNames = Array.from(uniqueNameCounts.entries()).slice(0, 8);
+
+      const chipsHtml = topUniqueNames.map(([nameStr, meta]) => {
+        const isSim = meta.matchType !== "exact";
+        return `<button type="button" data-suggest-fill="${nameStr.replace(/"/g, '&quot;')}" class="px-2.5 py-1 rounded-full text-[11px] font-bold transition flex items-center gap-1 ${isSim ? 'bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300' : 'bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200'}">
+          <span>${nameStr}</span>
+          <span class="text-[10px] opacity-75">(${meta.count})</span>
+        </button>`;
+      }).join("");
+
+      const topVoters = scored.slice(0, 10);
+      const rowsHtml = topVoters.map(item => {
+        const v = item.v;
+        let badgeHtml = `<span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">सटीक मैच</span>`;
+        if (item.matchType === "matra" || item.matchType === "skeleton") {
+          badgeHtml = `<span class="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-bold">मात्रा / स्पेलिंग मैच</span>`;
+        } else if (item.matchType === "similar") {
+          badgeHtml = `<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-bold">मिलता-जुलता नाम</span>`;
+        }
+        return `
+          <button type="button" data-suggest-voter="${v.n.replace(/"/g, '&quot;')}" data-suggest-fid="${v.fid}" class="w-full px-3.5 py-2 text-left hover:bg-blue-50/80 transition flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-extrabold text-xs sm:text-sm text-slate-900">${v.n}</span>
+                ${badgeHtml}
+              </div>
+              <div class="text-[11px] text-slate-500 truncate">
+                ${v.rt}: <strong class="text-slate-700">${v.rn}</strong> | आयु: ${v.a} (${v.g === 'M' ? 'पु.' : 'म.'})
+              </div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="px-2 py-0.5 rounded bg-slate-900 text-white text-[10px] font-bold">वार्ड ${v.w} #${v.s}</span>
+              <div class="text-[10px] text-blue-800 font-semibold mt-0.5">मकान ${v.h}</div>
+            </div>
+          </button>
+        `;
+      }).join("");
+
+      box.innerHTML = `
+        <div class="p-2.5 bg-slate-50/90">
+          <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+            <span>🔍 मिलते-जुलते नाम चुनें (${scored.length} वोटर मिले)</span>
+            <span class="text-blue-700">क्लिक करके चुनें</span>
+          </div>
+          <div class="flex flex-wrap gap-1.5">${chipsHtml}</div>
+        </div>
+        <div class="divide-y divide-slate-100">${rowsHtml}</div>
+      `;
+      box.classList.remove("hidden");
+    }
+
+    // Render Live Auto-Suggest Dropdown under Family Search Input
+    function updateFamSearchSuggestions() {
+      const inputEl = document.getElementById("famSearchInput");
+      const box = document.getElementById("famSearchSuggestions");
+      const clearBtn = document.getElementById("btnClearFamSearch");
+      if (!inputEl || !box) return;
+
+      const rawQ = (inputEl.value || "").trim();
+      if (clearBtn) {
+        clearBtn.classList.toggle("hidden", !rawQ);
+        clearBtn.classList.toggle("flex", !!rawQ);
+      }
+
+      if (!rawQ || document.activeElement !== inputEl) {
+        box.classList.add("hidden");
+        box.innerHTML = "";
+        return;
+      }
+
+      const qInfo = buildQueryInfo(rawQ);
+      const wFilter = document.getElementById("famWardSelect").value;
+
+      const scored = [];
+      for (const fam of RAW_DATA.families) {
+        if (wFilter !== "ALL" && String(fam.w) !== wFilter) continue;
+        const res = scoreFamilyMatch(fam, qInfo);
+        if (res.score > 0) {
+          scored.push({ fam, score: res.score, matchType: res.matchType, matchedVoter: res.matchedVoter });
+        }
+      }
+
+      scored.sort((a, b) => b.score - a.score || b.fam.tot - a.fam.tot);
+
+      if (scored.length === 0) {
+        box.innerHTML = `
+          <div class="p-3 text-xs text-slate-500 text-center">
+            "${rawQ}" से मिलता-जुलता कोई परिवार या सदस्य नहीं मिला।
+          </div>
+        `;
+        box.classList.remove("hidden");
+        return;
+      }
+
+      const topFams = scored.slice(0, 8);
+      const rowsHtml = topFams.map(item => {
+        const fam = item.fam;
+        const mv = item.matchedVoter;
+        const subMemberInfo = (mv && mv.n !== fam.hd)
+          ? `<span class="text-blue-700 font-semibold">सदस्य मैच: ${mv.n} (${mv.rt}: ${mv.rn})</span>`
+          : `<span>${fam.hr} | ${fam.mh}</span>`;
+        let badgeHtml = item.matchType === "exact"
+          ? `<span class="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-bold">सटीक मैच</span>`
+          : `<span class="px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 text-[10px] font-bold">मिलता-जुलता नाम</span>`;
+
+        return `
+          <button type="button" data-suggest-fam-open="${fam.id}" data-suggest-fam-fill="${(mv ? mv.n : fam.hd).replace(/"/g, '&quot;')}" class="w-full px-3.5 py-2 text-left hover:bg-blue-50/80 transition flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="font-extrabold text-xs sm:text-sm text-slate-900">मुखिया: ${fam.hd}</span>
+                ${badgeHtml}
+              </div>
+              <div class="text-[11px] text-slate-500 truncate">${subMemberInfo}</div>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="px-2 py-0.5 rounded bg-slate-900 text-white text-[10px] font-bold">वार्ड ${fam.w} | मकान ${fam.h}</span>
+              <div class="text-[10px] text-blue-800 font-bold mt-0.5">कुल ${fam.tot} वोट</div>
+            </div>
+          </button>
+        `;
+      }).join("");
+
+      box.innerHTML = `
+        <div class="px-3 py-1.5 bg-slate-50 text-[10px] font-bold text-slate-500 flex items-center justify-between">
+          <span>🏠 मिलते-जुलते परिवार / सदस्य (${scored.length})</span>
+          <span class="text-blue-700">परिवार खोलने के लिए क्लिक करें</span>
+        </div>
+        <div class="divide-y divide-slate-100">${rowsHtml}</div>
+      `;
+      box.classList.remove("hidden");
+    }
+
     // ---------------- FAMILIES RENDER ----------------
     function renderFamilies() {
       if (!currentLoggedInUser) return;
-      const q = (document.getElementById("famSearchInput").value || "").trim().toLowerCase();
+      ensureSearchIndex();
+      const rawQ = (document.getElementById("famSearchInput").value || "").trim();
+      const qInfo = buildQueryInfo(rawQ);
       const wFilter = document.getElementById("famWardSelect").value;
       const stFilter = document.getElementById("famStatusSelect").value;
       const sortBy = document.getElementById("famSortSelect").value;
 
+      const matchMetaMap = {};
       let filtered = RAW_DATA.families.filter(fam => {
         if (wFilter !== "ALL" && String(fam.w) !== wFilter) return false;
         const st = getFamState(fam);
         if (stFilter !== "ALL" && st.cat !== stFilter) return false;
-        if (q) {
-          const matchHead = fam.hd.toLowerCase().includes(q) || fam.hr.toLowerCase().includes(q) || String(fam.h).toLowerCase().includes(q) || fam.mh.toLowerCase().includes(q) || fam.id.toLowerCase().includes(q);
-          if (matchHead) return true;
-          const memMatch = RAW_DATA.voters.some(v => v.fid === fam.id && (v.n.toLowerCase().includes(q) || v.rn.toLowerCase().includes(q) || v.ep.toLowerCase().includes(q)));
-          return memMatch;
+        if (rawQ) {
+          const res = scoreFamilyMatch(fam, qInfo);
+          if (res.score <= 0) return false;
+          matchMetaMap[fam.id] = res;
         }
         return true;
       });
 
+      // If strict + fuzzy returned both exact/matra and distant similar matches, keep all relevant matches but sort best score first!
       filtered.sort((a, b) => {
+        if (rawQ) {
+          const sa = matchMetaMap[a.id] ? matchMetaMap[a.id].score : 0;
+          const sb = matchMetaMap[b.id] ? matchMetaMap[b.id].score : 0;
+          if (sb !== sa) return sb - sa;
+        }
         if (sortBy === "SIZE_DESC") return b.tot - a.tot || a.w - b.w;
         if (sortBy === "OUR_DESC") return getFamState(b).our - getFamState(a).our || b.tot - a.tot;
         return a.w - b.w || String(a.h).localeCompare(String(b.h), undefined, { numeric: true });
@@ -1721,6 +2184,13 @@
       filtered.forEach(fam => {
         const st = getFamState(fam);
         const swing = Math.max(0, fam.tot - st.our - st.opp);
+        const mMeta = matchMetaMap[fam.id];
+        let matchedMemberHintHtml = "";
+        if (rawQ && mMeta && mMeta.matchedVoter) {
+          const mv = mMeta.matchedVoter;
+          const simLabel = mMeta.matchType === "exact" ? "सदस्य मैच" : "मिलता-जुलता नाम मैच";
+          matchedMemberHintHtml = `<div class="mt-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-blue-50 border border-blue-200 text-[11px] font-bold text-blue-900">🔍 ${simLabel}: ${mv.n} (${mv.rt}: ${mv.rn}, क्र. #${mv.s})</div>`;
+        }
 
         let adminMultiBadgesHtml = "";
         if (currentLoggedInUser === "ADMIN") {
@@ -1754,6 +2224,7 @@
               </div>
               <h3 class="text-sm sm:text-base font-bold text-slate-900 mt-1.5">मुखिया: ${fam.hd} <span class="text-xs font-normal text-slate-500">(${fam.ha} वर्ष, ${fam.hr})</span></h3>
               <p class="text-xs text-slate-500">${fam.mh} | बूथ: ${fam.b}</p>
+              ${matchedMemberHintHtml}
             </div>
             <div class="text-right shrink-0 bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200">
               <div class="text-[10px] text-slate-500 font-semibold">कुल वोट</div>
@@ -1800,12 +2271,15 @@
 
     function renderVoters() {
       if (!currentLoggedInUser) return;
-      const q = (document.getElementById("voterSearchInput").value || "").trim().toLowerCase();
+      ensureSearchIndex();
+      const rawQ = (document.getElementById("voterSearchInput").value || "").trim();
+      const qInfo = buildQueryInfo(rawQ);
       const wFilter = document.getElementById("voterWardSelect").value;
       const catFilter = document.getElementById("voterCatSelect").value;
       const castFilter = document.getElementById("voterCastSelect").value;
       const sortBy = document.getElementById("voterSortSelect").value;
 
+      const voterMatchMap = {};
       let filtered = RAW_DATA.voters.filter(v => {
         if (wFilter !== "ALL" && String(v.w) !== wFilter) return false;
         const vst = appState.voters[v.id] || {};
@@ -1814,19 +2288,20 @@
         if (catFilter !== "ALL" && effectiveCat !== catFilter) return false;
         if (castFilter === "CAST" && !vst.voted) return false;
         if (castFilter === "PENDING" && vst.voted) return false;
-        if (q) {
-          return (
-            v.n.toLowerCase().includes(q) ||
-            v.rn.toLowerCase().includes(q) ||
-            v.ep.toLowerCase().includes(q) ||
-            String(v.h).toLowerCase() === q ||
-            String(v.s) === q
-          );
+        if (rawQ) {
+          const res = scoreVoterMatch(v, qInfo);
+          if (res.score <= 0) return false;
+          voterMatchMap[v.id] = res;
         }
         return true;
       });
 
       filtered.sort((a, b) => {
+        if (rawQ) {
+          const sa = voterMatchMap[a.id] ? voterMatchMap[a.id].score : 0;
+          const sb = voterMatchMap[b.id] ? voterMatchMap[b.id].score : 0;
+          if (sb !== sa) return sb - sa;
+        }
         if (sortBy === "NAME") return a.n.localeCompare(b.n, "hi");
         if (sortBy === "AGE_DESC") return b.a - a.a;
         if (sortBy === "HOUSE") return a.w - b.w || String(a.h).localeCompare(String(b.h), undefined, { numeric: true }) || a.s - b.s;
@@ -1850,13 +2325,19 @@
         const famSt = appState.families[v.fid] || {};
         const cat = vst.cat || famSt.cat || "U";
         const voted = !!vst.voted;
+        const mInfo = voterMatchMap[v.id];
+        let matchTagHtml = "";
+        if (rawQ && mInfo && mInfo.matchType !== "exact") {
+          const tagText = (mInfo.matchType === "matra" || mInfo.matchType === "skeleton") ? "मात्रा/स्पेलिंग मैच" : "मिलता-जुलता नाम";
+          matchTagHtml = `<span class="ml-1.5 inline-block px-1.5 py-0.5 rounded bg-amber-100 text-amber-900 border border-amber-300 text-[10px] font-bold">${tagText}</span>`;
+        }
 
         const tr = document.createElement("tr");
         tr.className = voted ? "bg-emerald-50/60 hover:bg-emerald-100/50" : "hover:bg-slate-50";
         tr.innerHTML = `
           <td class="py-2 px-3 font-semibold text-slate-900">वार्ड ${v.w} <span class="text-blue-700 font-bold">#${v.s}</span></td>
           <td class="py-2 px-3"><button data-act="open-modal" data-fid="${v.fid}" class="underline text-blue-800 font-semibold">मकान ${v.h}</button></td>
-          <td class="py-2 px-3 font-bold text-slate-900">${v.n}</td>
+          <td class="py-2 px-3 font-bold text-slate-900">${v.n}${matchTagHtml}</td>
           <td class="py-2 px-3 text-slate-600">${v.rt}: ${v.rn}</td>
           <td class="py-2 px-3 text-slate-700">${v.a} / ${v.g === 'M' ? 'पु.' : 'म.'}</td>
           <td class="py-2 px-3 font-mono text-xs text-slate-600">${v.ep || '-'}</td>
@@ -2029,7 +2510,7 @@
 
       RAW_DATA.families.forEach(fam => {
         if (wFilter !== "ALL" && String(fam.w) !== wFilter) return;
-        if (q && !fam.hd.toLowerCase().includes(q) && !String(fam.h).toLowerCase().includes(q)) return;
+        if (q && scoreFamilyMatch(fam, buildQueryInfo(q)).score <= 0) return;
 
         let surveyedCount = 0;
         let sumOur = 0;
@@ -2471,16 +2952,96 @@
         });
       });
 
-      // Family Filters
+      // Family Filters + Live Smart Suggestions
       ["famSearchInput", "famWardSelect", "famStatusSelect", "famSortSelect"].forEach(id => {
-        document.getElementById(id).addEventListener("input", renderFamilies);
-        document.getElementById(id).addEventListener("change", renderFamilies);
+        document.getElementById(id).addEventListener("input", () => {
+          renderFamilies();
+          if (id === "famSearchInput" || id === "famWardSelect") updateFamSearchSuggestions();
+        });
+        document.getElementById(id).addEventListener("change", () => {
+          renderFamilies();
+          if (id === "famSearchInput" || id === "famWardSelect") updateFamSearchSuggestions();
+        });
       });
 
-      // Voter Filters
+      const famInpEl = document.getElementById("famSearchInput");
+      const famSugBox = document.getElementById("famSearchSuggestions");
+      famInpEl.addEventListener("focus", updateFamSearchSuggestions);
+      document.getElementById("btnClearFamSearch").addEventListener("click", () => {
+        famInpEl.value = "";
+        updateFamSearchSuggestions();
+        renderFamilies();
+        famInpEl.focus();
+      });
+      famSugBox.addEventListener("click", e => {
+        const btn = e.target.closest("button[data-suggest-fam-open]");
+        if (!btn) return;
+        const fid = btn.getAttribute("data-suggest-fam-open");
+        const fillName = btn.getAttribute("data-suggest-fam-fill");
+        if (fillName) famInpEl.value = fillName;
+        famSugBox.classList.add("hidden");
+        renderFamilies();
+        if (fid) openFamilyModal(fid);
+      });
+
+      // Voter Filters + Live Smart Suggestions
       ["voterSearchInput", "voterWardSelect", "voterCatSelect", "voterCastSelect", "voterSortSelect"].forEach(id => {
-        document.getElementById(id).addEventListener("input", () => { currentVoterPage = 1; renderVoters(); });
-        document.getElementById(id).addEventListener("change", () => { currentVoterPage = 1; renderVoters(); });
+        document.getElementById(id).addEventListener("input", () => {
+          currentVoterPage = 1;
+          renderVoters();
+          if (id === "voterSearchInput" || id === "voterWardSelect") updateVoterSearchSuggestions();
+        });
+        document.getElementById(id).addEventListener("change", () => {
+          currentVoterPage = 1;
+          renderVoters();
+          if (id === "voterSearchInput" || id === "voterWardSelect") updateVoterSearchSuggestions();
+        });
+      });
+
+      const voterInpEl = document.getElementById("voterSearchInput");
+      const voterSugBox = document.getElementById("voterSearchSuggestions");
+      voterInpEl.addEventListener("focus", updateVoterSearchSuggestions);
+      document.getElementById("btnClearVoterSearch").addEventListener("click", () => {
+        voterInpEl.value = "";
+        currentVoterPage = 1;
+        updateVoterSearchSuggestions();
+        renderVoters();
+        voterInpEl.focus();
+      });
+      voterSugBox.addEventListener("click", e => {
+        const chipBtn = e.target.closest("button[data-suggest-fill]");
+        if (chipBtn) {
+          voterInpEl.value = chipBtn.getAttribute("data-suggest-fill") || "";
+          currentVoterPage = 1;
+          voterSugBox.classList.add("hidden");
+          renderVoters();
+          return;
+        }
+        const rowBtn = e.target.closest("button[data-suggest-voter]");
+        if (rowBtn) {
+          voterInpEl.value = rowBtn.getAttribute("data-suggest-voter") || "";
+          currentVoterPage = 1;
+          voterSugBox.classList.add("hidden");
+          renderVoters();
+        }
+      });
+
+      // Close suggestion dropdowns when clicking outside or pressing Escape
+      document.addEventListener("click", e => {
+        const vWrap = document.getElementById("voterSearchWrap");
+        if (vWrap && !vWrap.contains(e.target)) {
+          voterSugBox.classList.add("hidden");
+        }
+        const fWrap = document.getElementById("famSearchWrap");
+        if (fWrap && !fWrap.contains(e.target)) {
+          famSugBox.classList.add("hidden");
+        }
+      });
+      document.addEventListener("keydown", e => {
+        if (e.key === "Escape") {
+          voterSugBox.classList.add("hidden");
+          famSugBox.classList.add("hidden");
+        }
       });
 
       // Admin Matrix Filters
